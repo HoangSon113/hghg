@@ -33,16 +33,13 @@ def generate_keypair():
     while p == q:
         q = generate_prime(100, 1000)
     
-    # Tính n = p * q và phi = (p-1) * (q-1)
     n = p * q
     phi = (p - 1) * (q - 1)
     
-    # Chọn e: 1 < e < phi, nguyên tố cùng nhau với phi
     e = randint(3, phi - 1)
     while math.gcd(e, phi) != 1:
         e = randint(3, phi - 1)
     
-    # Tìm d: nghịch đảo modulo của e
     d = mod_inverse(e, phi)
     
     return ((e, n), (d, n))
@@ -50,18 +47,16 @@ def generate_keypair():
 def encrypt(public_key, plaintext):
     """Mã hóa thông điệp"""
     e, n = public_key
-    # Chuyển plaintext thành số (ASCII) và mã hóa
     cipher = [pow(ord(char), e, n) for char in plaintext]
     return cipher
 
 def decrypt(private_key, ciphertext):
     """Giải mã thông điệp"""
     d, n = private_key
-    # Giải mã và chuyển về ký tự
     plain = [chr(pow(char, d, n)) for char in ciphertext]
     return ''.join(plain)
 
-# Test chương trình
+# Test
 if __name__ == "__main__":
     print("Tạo cặp khóa RSA...")
     public_key, private_key = generate_keypair()
@@ -69,18 +64,15 @@ if __name__ == "__main__":
     print(f"Khóa riêng tư: {private_key}")
     
     # Test case
-    test_messages = ["Hello", "RSA Test", "Cryptography", "Short", "VeryLongMessage123"]
+    test_messages = ["Hello", "Nguyen Hoang Sơn", "Nguyen Anh Kiet", "Cong nghe thong tin", "Ton Duc Thang University"]
     
     print("\nKết quả kiểm tra:")
     for message in test_messages:
         print(f"\nThông điệp gốc: {message}")
-        # Mã hóa
         encrypted_msg = encrypt(public_key, message)
         print(f"Thông điệp mã hóa: {encrypted_msg}")
-        # Giải mã
         decrypted_msg = decrypt(private_key, encrypted_msg)
         print(f"Thông điệp giải mã: {decrypted_msg}")
-        # Kiểm tra
         print(f"Kết quả đúng: {decrypted_msg == message}")
 
 # Đo thời gian
