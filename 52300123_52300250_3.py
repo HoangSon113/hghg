@@ -1,6 +1,7 @@
 import math
 import time
 from random import randint
+import matplotlib.pyplot as plt
 
 def is_prime(n):
     """Kiểm tra số nguyên tố"""
@@ -27,22 +28,18 @@ def mod_inverse(e, phi):
 
 def generate_keypair():
     """Tạo cặp khóa công khai và riêng tư"""
-    # Chọn hai số nguyên tố p, q
     p = generate_prime(100, 1000)
     q = generate_prime(100, 1000)
     while p == q:
         q = generate_prime(100, 1000)
     
-    # Tính n = p * q và phi = (p-1) * (q-1)
     n = p * q
     phi = (p - 1) * (q - 1)
     
-    # Chọn e: 1 < e < phi, nguyên tố cùng nhau với phi
     e = randint(3, phi - 1)
     while math.gcd(e, phi) != 1:
         e = randint(3, phi - 1)
     
-    # Tìm d: nghịch đảo modulo của e
     d = mod_inverse(e, phi)
     
     return ((e, n), (d, n))
@@ -50,20 +47,18 @@ def generate_keypair():
 def encrypt(public_key, plaintext):
     """Mã hóa thông điệp"""
     e, n = public_key
-    # Chuyển plaintext thành số (ASCII) và mã hóa
     cipher = [pow(ord(char), e, n) for char in plaintext]
     return cipher
 
 def decrypt(private_key, ciphertext):
     """Giải mã thông điệp"""
     d, n = private_key
-    # Giải mã và chuyển về ký tự
     plain = [chr(pow(char, d, n)) for char in ciphertext]
     return ''.join(plain)
 
-# Test chương trình
+# Test chương trình và vẽ biểu đồ
 if __name__ == "__main__":
-    print("Tạo cặp khóa RSA...")
+    print("=== Tạo cặp khóa RSA ===")
     public_key, private_key = generate_keypair()
     print(f"Khóa công khai: {public_key}")
     print(f"Khóa riêng tư: {private_key}")
@@ -71,32 +66,48 @@ if __name__ == "__main__":
     # Test case
     test_messages = ["Hello", "RSA Test", "Cryptography", "Short", "VeryLongMessage123"]
     
-    print("\nKết quả kiểm tra:")
+    print("\n=== Kết quả kiểm tra ===")
     for message in test_messages:
         print(f"\nThông điệp gốc: {message}")
-        # Mã hóa
         encrypted_msg = encrypt(public_key, message)
         print(f"Thông điệp mã hóa: {encrypted_msg}")
-        # Giải mã
         decrypted_msg = decrypt(private_key, encrypted_msg)
         print(f"Thông điệp giải mã: {decrypted_msg}")
-        # Kiểm tra
         print(f"Kết quả đúng: {decrypted_msg == message}")
-
-# Đo thời gian
-print("\nĐo thời gian thực thi:")
-for message in test_messages:
-    start_time = time.time()
-    encrypted_msg = encrypt(public_key, message)
-    encrypt_time = time.time() - start_time
     
-    start_time = time.time()
-    decrypted_msg = decrypt(private_key, encrypted_msg)
-    decrypt_time = time.time() - start_time
+    print("\n=== Đo thời gian thực thi ===")
+    time_data = []
+    for message in test_messages:
+        start_time = time.time()
+        encrypted_msg = encrypt(public_key, message)
+        encrypt_time = time.time() - start_time
+        
+        start_time = time.time()
+        decrypted_msg = decrypt(private_key, encrypted_msg)
+        decrypt_time = time.time() - start_time
+        
+        print(f"\nThông điệp: {message} (độ dài: {len(message)} ký tự)")
+        print(f"Thời gian mã hóa: {encrypt_time:.6f} giây")
+        print(f"Thời gian giải mã: {decrypt_time:.6f} giây")
+        time_data.append((len(message), encrypt_time, decrypt_time))
     
-    print(f"\nThông điệp: {message}")
-    print(f"Thời gian mã hóa: {encrypt_time:.6f} giây")
-
-
-
-
+    print("\n=== Phân tích thời gian (tọa độ x: độ dài, y: thời gian) ===")
+    print("Độ dài\tMã hóa (s)\tGiải mã (s)")
+    for length, enc_time, dec_time in time_data:
+        print(f"{length}\t{enc_time:.6f}\t{dec_time:.6f}")
+    
+    # Vẽ biểu đồ
+    print("\n=== Vẽ biểu đồ thời gian ===")
+    lengths = [data[0] for data in time_data]
+    enc_times = [data[1] for data in time_data]
+    dec_times = [data[2] for data in time_data]
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(lengths, enc_times, marker='o', label='Thời gian mã hóa', color='blue')
+    plt.plot(lengths, dec_times, marker='s', label='Thời gian giải mã', color='red')
+    plt.xlabel('Độ dài thông điệp (ký tự)')
+    plt.ylabel('Thời gian (giây)')
+    plt.title('Thời gian mã hóa và giải mã RSA theo độ dài thông điệp')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
