@@ -56,7 +56,11 @@ def decrypt(private_key, ciphertext):
     plain = [chr(pow(char, d, n)) for char in ciphertext]
     return ''.join(plain)
 
+<<<<<<< HEAD
 # Test chương trình và vẽ biểu đồ
+=======
+# Test
+>>>>>>> e3ed4760751926b209984e2cfb3573b3dcb988b9
 if __name__ == "__main__":
     print("=== Tạo cặp khóa RSA ===")
     public_key, private_key = generate_keypair()
@@ -64,7 +68,7 @@ if __name__ == "__main__":
     print(f"Khóa riêng tư: {private_key}")
     
     # Test case
-    test_messages = ["Hello", "RSA Test", "Cryptography", "Short", "VeryLongMessage123"]
+    test_messages = ["Hello", "Nguyen Hoang Sơn", "Nguyen Anh Kiet", "Cong nghe thong tin", "Ton Duc Thang University"]
     
     print("\n=== Kết quả kiểm tra ===")
     for message in test_messages:
