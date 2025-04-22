@@ -1,107 +1,74 @@
-def Infix2Postfix(Infix):
-    precedence = {'<=>': 1, '=>': 2, '&': 3, '|': 3, '~': 4}
-    output = []
-    stack = []
+import itertools
 
-    i = 0
-    while i < len(Infix):
-        char = Infix[i]
-        
+precedence = {
+    '~': 4,
+    '&': 3,
+    '|': 2,
+    '>': 1,
+    '=': 0
+}
+
+def Infix2Postfix(infix):
+    stack = []
+    output = ''
+    for char in infix:
         if char.isalpha():
-            output.append(char)
-            i += 1
+            output += char
         elif char == '(':
             stack.append(char)
-            i += 1
         elif char == ')':
             while stack and stack[-1] != '(':
-                output.append(stack.pop())
+                output += stack.pop()
             stack.pop()
-            i += 1
-        elif char in '~&|':
-            while (stack and stack[-1] != '(' and 
-                   precedence.get(stack[-1], 0) >= precedence.get(char, 0)):
-                output.append(stack.pop())
-            stack.append(char)
-            i += 1
-        elif char == '=' and i + 1 < len(Infix) and Infix[i + 1] == '>':
-            op = '=>'
-            while (stack and stack[-1] != '(' and 
-                   precedence.get(stack[-1], 0) >= precedence.get(op, 0)):
-                output.append(stack.pop())
-            stack.append(op)
-            i += 2
-        elif char == '<' and i + 2 < len(Infix) and Infix[i + 1] == '=' and Infix[i + 2] == '>':
-            op = '<=>'
-            while (stack and stack[-1] != '(' and 
-                   precedence.get(stack[-1], 0) >= precedence.get(op, 0)):
-                output.append(stack.pop())
-            stack.append(op)
-            i += 3
         else:
-            i += 1
-    
-    # Lấy hết toán tử còn lại trong stack
+            while stack and stack[-1] != '(' and precedence[char] <= precedence.get(stack[-1], 0):
+                output += stack.pop()
+            stack.append(char)
     while stack:
-        output.append(stack.pop())
-    
-    return ''.join(output)
+        output += stack.pop()
+    return output
 
-def Postfix2Truthtable(Postfix):
-    # Tìm các biến trong biểu thức hậu tố
-    variables = sorted(set([c for c in Postfix if c.isalpha()]))
-    if not variables:
-        return "Không tìm thấy biến"
-    
-    n = len(variables)
-    combinations = [[(i >> j) & 1 for j in range(n-1, -1, -1)] for i in range(2**n)]
-    
-    # Khởi tạo bảng chân lý
-    truth_table = []
-    for combo in combinations:
-        env = dict(zip(variables, combo))
-        stack = []
-        
-        for char in Postfix:
-            if char.isalpha():
-                stack.append(env[char])
-            elif char == '~':
-                a = stack.pop()
-                stack.append(1 - a)
-            elif char == '&':
-                # AND
-                b, a = stack.pop(), stack.pop()
-                stack.append(a & b)
-            elif char == '|':
-                # OR
-                b, a = stack.pop(), stack.pop()
-                stack.append(a | b)
-            elif char == '=>':
-                b, a = stack.pop(), stack.pop()
-                stack.append((1 - a) | b)
-            elif char == '<=>':
-                b, a = stack.pop(), stack.pop()
-                stack.append((a & b) | ((1 - a) & (1 - b)))
-        
-        row = combo + [stack.pop()]
-        truth_table.append(row)
-    
-    header = variables + ['Kết quả']
-    result = '\n'.join(['\t'.join(map(str, row)) for row in [header] + truth_table])
-    return result
+def eval_postfix(expr, values):
+    stack = []
+    for token in expr:
+        if token.isalpha():
+            stack.append(values[token])
+        elif token == '~':
+            a = stack.pop()
+            stack.append(not a)
+        else:
+            b = stack.pop()
+            a = stack.pop()
+            if token == '&':
+                stack.append(a and b)
+            elif token == '|':
+                stack.append(a or b)
+            elif token == '>':
+                stack.append((not a) or b)
+            elif token == '=':
+                stack.append(a == b)
+    return stack.pop()
 
-test_cases = [
-    "P|(Q&R)",
-    "~P|(Q&R)",
-    "P|(R&Q)",
-    "(P=>Q)&(Q=>R)",
-    "(P<=>Q)=>~P"
-]
+def Postfix2Truthtable(postfix):
+    variables = sorted(set(filter(str.isalpha, postfix)))
+    print(" | ".join(variables) + " | Result")
+    print("-" * (4 * len(variables) + 10))
+    for combo in itertools.product([False, True], repeat=len(variables)):
+        values = dict(zip(variables, combo))
+        result = eval_postfix(postfix, values)
+        row = " | ".join(str(int(values[v])) for v in variables)
+        print(f"{row} |   {int(result)}")
 
-for i, infix in enumerate(test_cases, 1):
-    print(f"Test case {i}: {infix}")
-    postfix = Infix2Postfix(infix)
-    print(f"Biểu thức hậu tố: {postfix}")
-    print("Bảng chân lý:")
-    print(Postfix2Truthtable(postfix))
-    print()
+if __name__ == "__main__":
+    testcases = [
+        "R|(P&Q)",
+        "~P|(Q&R)>R",
+        "P|(R&Q)",
+        "(P>Q)&(Q>R)",
+        "(P|~Q)>~P=(P|(~Q))>~P"
+    ]
+    for i, infix in enumerate(testcases, 1):
+        print(f"\nTestcase {i}: {infix}")
+        postfix = Infix2Postfix(infix)
+        print("Postfix:", postfix)
+        Postfix2Truthtable(postfix)
